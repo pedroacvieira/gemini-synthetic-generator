@@ -12,7 +12,6 @@ from io import BytesIO
 from google import genai
 from google.genai import types
 from PIL import Image
-from ultralytics import YOLO
 import random
 
 logger = logging.getLogger(__name__)
@@ -25,16 +24,12 @@ class GeminiSyntheticGenerator:
             self,
             api_key: Optional[str] = None,
             model_name: str = "gemini-2.5-flash-image-preview",
-            use_yolo_verification: bool = True,
-            yolo_model: str = "yolov8n.pt",
     ):
         """Initialize the Gemini synthetic generator.
 
         Args:
             api_key: Gemini API key (uses GEMINI_API_KEY env var if None)
             model_name: Gemini model to use for generation
-            use_yolo_verification: Whether to use YOLO for object verification
-            yolo_model: YOLO model path/name
         """
         # Setup Gemini client
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
@@ -46,62 +41,11 @@ class GeminiSyntheticGenerator:
         self.client = genai.Client(api_key=self.api_key)
         self.model_name = model_name
 
-        # Setup YOLO for verification
-        self.use_yolo_verification = use_yolo_verification
-        if use_yolo_verification:
-            self.yolo = YOLO(yolo_model)
-            logger.info(f"Loaded YOLO model: {yolo_model}")
 
-        # COCO class names for verification
-        self.coco_classes = {
-            0: "person", 1: "bicycle", 2: "car", 3: "motorcycle", 4: "airplane",
-            5: "bus", 6: "train", 7: "truck", 8: "boat", 9: "traffic light",
-            16: "bird", 17: "cat", 18: "dog", 19: "horse", 20: "sheep",
-            32: "sports ball", 37: "baseball bat", 38: "baseball glove",
-            39: "skateboard", 40: "surfboard", 41: "tennis racket",
-        }
 
-    def detect_objects_yolo(self, image_path: str) -> List[Dict[str, Any]]:
-        """Detect objects in image using YOLO for verification.
-
-        Args:
-            image_path: Path to image
-
-        Returns:
-            List of detected objects with classes and confidence scores
-        """
-        if not self.use_yolo_verification:
-            return []
-
-        try:
-            results = self.yolo(image_path, conf=0.3)
-            detections = []
-
-            for r in results:
-                boxes = r.boxes
-                if boxes is not None:
-                    for box in boxes:
-                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                        confidence = float(box.conf[0].cpu().numpy())
-                        class_id = int(box.cls[0].cpu().numpy())
-                        class_name = self.yolo.names[class_id]
-
-                        detections.append({
-                            "class": class_name,
-                            "class_id": class_id,
-                            "confidence": confidence,
-                            "bbox": [int(x1), int(y1), int(x2), int(y2)],
-                        })
-
-            logger.info(f"YOLO detected {len(detections)} objects")
-            return detections
-
-        except Exception as e:
-            logger.warning(f"YOLO detection failed: {e}")
-            return []
 
     def auto_detect_object_type(self, object_path: str) -> str:
-        """Auto-detect object type using YOLO on the object image.
+        """Auto-detect object type using Gemini visual analysis.
 
         Args:
             object_path: Path to object image
@@ -109,37 +53,58 @@ class GeminiSyntheticGenerator:
         Returns:
             Detected object type string
         """
-        detections = self.detect_objects_yolo(object_path)
+        try:
+            # Load the object image
+            object_image = Image.open(object_path)
 
-        if detections:
-            # Return the highest confidence detection
-            best_detection = max(detections, key=lambda x: x["confidence"])
-            return best_detection["class"]
+            # Create prompt for object identification
+            prompt = """
+            Analyze this image and identify the main object. Provide a single, concise object name that best describes what you see.
 
-        # Fallback to generic object
-        return "object"
+            Requirements:
+            - Return only the object name (e.g., "baseball", "cap", "phone", "book")
+            - Use simple, common terms
+            - Focus on the most prominent object in the image
+            - Keep it to 1-2 words maximum
+            """
+
+            # Get object identification from Gemini
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[prompt, object_image],
+            )
+
+            # Extract the object type from response
+            object_type = "object"  # fallback
+            for part in response.candidates[0].content.parts:
+                if part.text is not None:
+                    object_type = part.text.strip().lower()
+                    # Clean up the response to get just the object name
+                    object_type = object_type.split('\n')[0].strip()
+                    break
+
+            logger.info(f"Gemini detected object type: {object_type}")
+            return object_type
+
+        except Exception as e:
+            logger.warning(f"Gemini object detection failed: {e}")
+            return "object"
 
     def create_object_insertion_prompt(
             self,
             object_type: str,
-            scene_detections: List[Dict[str, Any]],
             enhancement_level: str = "realistic"
     ) -> str:
         """Create optimized prompt for object insertion.
 
         Args:
             object_type: Type of object to insert
-            scene_detections: YOLO detections from scene
             enhancement_level: Level of realism (basic, realistic, photorealistic)
 
         Returns:
             Optimized prompt for Gemini
         """
-        # Scene context from detections
-        scene_context = ""
-        if scene_detections:
-            detected_objects = [d["class"] for d in scene_detections if d["confidence"] > 0.5]
-            scene_context = f"Scene contains: {', '.join(set(detected_objects))}. "
+        # Scene context will be analyzed by Gemini directly from the image
 
         # Enhancement specifications
         enhancements = {
@@ -161,9 +126,7 @@ class GeminiSyntheticGenerator:
         object_guidance = placement_rules.get(object_type, "in the most semantically appropriate location")
 
         prompt = f"""
-        Analyze the scene and seamlessly insert the {object_type} into the image. 
-
-        {scene_context}
+        Analyze the scene and seamlessly insert the {object_type} into the image.
 
         REQUIREMENTS:
         1. PLACEMENT: Position the {object_type} {object_guidance}
@@ -188,8 +151,7 @@ class GeminiSyntheticGenerator:
             self,
             text: str,
             target_area: str,
-            style: Optional[str] = None,
-            scene_detections: List[Dict[str, Any]] = None
+            style: Optional[str] = None
     ) -> str:
         """Create optimized prompt for text insertion.
 
@@ -197,16 +159,11 @@ class GeminiSyntheticGenerator:
             text: Text to insert
             target_area: Target area for insertion
             style: Optional style preference
-            scene_detections: YOLO detections from scene
 
         Returns:
             Optimized prompt for Gemini
         """
-        # Scene context
-        scene_context = ""
-        if scene_detections:
-            detected_objects = [d["class"] for d in scene_detections if d["confidence"] > 0.5]
-            scene_context = f"Scene contains: {', '.join(set(detected_objects))}. "
+        # Scene context will be analyzed by Gemini directly from the image
 
         # Style specifications
         style_specs = {
@@ -233,8 +190,6 @@ class GeminiSyntheticGenerator:
 
         prompt = f"""
         Insert the text "{text}" naturally into the image on the {target_area}.
-
-        {scene_context}
 
         REQUIREMENTS:
         1. PLACEMENT: Position text {area_guidance}
@@ -285,11 +240,8 @@ class GeminiSyntheticGenerator:
             object_type = self.auto_detect_object_type(object_path)
             logger.info(f"Auto-detected object type: {object_type}")
 
-        # Get scene analysis with YOLO
-        scene_detections = self.detect_objects_yolo(scene_path)
-
         # Create optimized prompt
-        prompt = self.create_object_insertion_prompt(object_type, scene_detections)
+        prompt = self.create_object_insertion_prompt(object_type)
 
         try:
             # Generate with Gemini
@@ -340,11 +292,8 @@ class GeminiSyntheticGenerator:
         # Load scene image
         scene_image = Image.open(scene_path)
 
-        # Get scene analysis with YOLO
-        scene_detections = self.detect_objects_yolo(scene_path)
-
         # Create optimized prompt
-        prompt = self.create_text_insertion_prompt(text, target_area, style, scene_detections)
+        prompt = self.create_text_insertion_prompt(text, target_area, style)
 
         try:
             # Generate with Gemini
@@ -384,13 +333,8 @@ class GeminiSyntheticGenerator:
         # Load image
         image = Image.open(image_path)
 
-        # Get YOLO detections for context
-        detections = self.detect_objects_yolo(image_path)
-
+        # Scene context will be analyzed by Gemini directly from the image
         detection_context = ""
-        if detections:
-            objects_found = [f"{d['class']} ({d['confidence']:.2f})" for d in detections[:5]]
-            detection_context = f"YOLO detected: {', '.join(objects_found)}"
 
         prompt = f"""
         Analyze this image and provide detailed suggestions for synthetic data augmentation.

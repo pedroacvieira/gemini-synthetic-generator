@@ -35,9 +35,6 @@ def insert_object(
         object_type: Optional[str] = typer.Option(
             None, help="Object type (auto-detected if not specified)"
         ),
-        verify_detection: bool = typer.Option(
-            True, help="Use YOLO to verify object detection"
-        ),
         api_key: Optional[str] = typer.Option(
             None, help="Gemini API key (or set GEMINI_API_KEY env var)"
         ),
@@ -52,9 +49,7 @@ def insert_object(
         raise typer.BadParameter(f"Object image not found: {object_image}")
 
     # Initialize generator
-    generator = GeminiSyntheticGenerator(
-        api_key=api_key, use_yolo_verification=verify_detection
-    )
+    generator = GeminiSyntheticGenerator(api_key=api_key)
 
     try:
         # Generate synthetic image
