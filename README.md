@@ -1,155 +1,256 @@
-# Gemini Synthetic Data Generator Model Card
+# Gemini Synthetic Data Generator
 
-**Version:** 0.1.0  
-**Date:** September 2025  
-**Model Type:** Generative AI Pipeline  
-**Authors:** Pedro Vieira
+AI-powered synthetic data generation using Google's Gemini vision model for seamless object and text insertion into images.
 
----
-
-## Method Summary
-
-The **Gemini Synthetic Data Generator** uses Google's Gemini 2.5 Flash Image Preview model to perform intelligent object and text insertion into images. This approach leverages Gemini's native multimodal capabilities for end-to-end synthetic data generation without requiring traditional computer vision pipelines.
-
-**Core Architecture:**
-1. **Scene Analysis**: Gemini analyzes scene context, lighting, and composition
-2. **Intelligent Prompting**: Dynamic prompt generation based on scene content, object types, and insertion requirements
-3. **Gemini Generation**: Direct image generation through Gemini's vision-language model with optimized prompts
-4. **Quality Output**: High-quality synthetic images with seamlessly integrated objects
-
-**Key Innovation**: Rather than traditional computer vision pipelines, this method treats synthetic data generation as a **visual reasoning task**, allowing Gemini to understand scene semantics, lighting conditions, perspective, and realistic object placement through natural language instructions.
-
-**Prompt Engineering**: Context-aware prompts include scene analysis, object-specific placement rules, lighting requirements, and technical specifications for photorealistic integration.
+**Author:** Pedro Vieira
 
 ---
 
-## Inputs / Outputs
+## Overview
 
-**Inputs:**
-- **Scene Image**: Base images (JPG, PNG, BMP) - any resolution up to 4K
-- **Object Image**: Objects for insertion with clean backgrounds (PNG preferred)
-- **Text Content**: UTF-8 text strings for text insertion tasks
-- **Configuration**: Object type, target areas, style preferences, quality levels
+This tool leverages Google's Gemini 2.5 Flash model to create realistic synthetic datasets by intelligently inserting objects and text into existing images. Unlike traditional computer vision approaches, it uses advanced AI reasoning to understand scene context, lighting, and spatial relationships for photorealistic results.
 
-**API Requirements:**
-- **Gemini API Key**: Google AI Studio API access required
-- **Rate Limits**: ~60 requests/minute (varies by tier)
+## Key Features
 
-**Outputs:**
-- **Generated Images**: Same format/resolution as input, with seamlessly integrated objects/text
-- **Scene Analysis**: Detailed scene understanding and insertion recommendations
-- **Batch Results**: Multiple variations per input image with different placements
+- **Object Insertion**: Seamlessly place objects into scenes with automatic scaling, lighting, and perspective correction
+- **Text Insertion**: Add text to clothing, signs, banners, and other surfaces with realistic styling and positioning
+- **Scene Analysis**: AI-powered analysis to identify optimal insertion opportunities
+- **Batch Processing**: Process multiple images efficiently with configurable variations
+- **Auto-Detection**: Automatic object type detection for optimal placement strategies
+- **CLI & Python API**: Both command-line interface and programmatic access
 
-**Supported Operations:**
-- Object insertion: Sports equipment, accessories, everyday objects
-- Text insertion: Clothing text, signage, banners, books
-- Scene analysis: Automated insertion opportunity identification
-- Batch processing: Scalable multi-image generation
+## Installation
 
----
+### Prerequisites
 
-## Environment
+- Python 3.10+
+- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
 
-**Dependencies:**
-```
-Core: google-genai (Gemini API), Pillow
-CLI: typer, rich
-Development: black, ruff, pytest
+### Install with uv (recommended)
+
+```bash
+git clone https://github.com/pedroacvieira/gemini-synthetic-generator.git
+cd gemini-synthetic-generator
+uv sync
 ```
 
-**System Requirements:**
-- **CPU**: 2+ cores recommended for batch processing
-- **RAM**: 4GB minimum, 8GB for large batch jobs
-- **Network**: Stable internet for Gemini API calls
+### Install with pip
 
-**Performance Metrics:**
-- **Processing Time**: 3-12 seconds per generation
-  - Gemini API call: ~3-12s
-  - Image processing: ~0.5s
-- **API Costs**: ~$0.005-0.015 per image (Gemini 2.5 Flash pricing)
-- **Throughput**: ~5-20 images/minute (API rate limited)
-- **Memory Usage**: ~1-2GB during processing
+```bash
+git clone https://github.com/pedroacvieira/gemini-synthetic-generator.git
+cd gemini-synthetic-generator
+pip install -e .
+```
 
-**Docker Support**: Full containerization with UV package management for easy deployment
+### Docker Installation
 
----
+```bash
+docker-compose up --build
+```
+
+## Quick Start
+
+### 1. Set API Key
+
+```bash
+export GEMINI_API_KEY="your-gemini-api-key"
+```
+
+### 2. Basic Object Insertion
+
+```bash
+# Insert a baseball into a tennis player image
+gemini-synthetic insert-object data/input/tennis_player.png data/objects/baseball.png data/output/result.png
+```
+
+### 3. Text Insertion
+
+```bash
+# Add text to a shirt
+gemini-synthetic insert-text data/input/tennis_player.png "TEAM ALPHA" data/output/text_result.png --target-area shirt
+```
+
+### 4. Batch Processing
+
+```bash
+# Process multiple images with random objects and texts
+gemini-synthetic batch-process data/input/ data/output/ --objects-dir data/objects/ --texts-file data/texts/sample_texts.txt --num-variations 5
+```
+
+## Usage Examples
+
+### Command Line Interface
+
+```bash
+# Object insertion with specific type
+gemini-synthetic insert-object data/input/tennis_player.png data/objects/baseball.png data/output/result.png
+
+# Text insertion with style
+gemini-synthetic insert-text data/input/tennis_player.png "TEAM ALPHA" data/output/text_result.png --target-area shirt
+
+# Scene analysis
+gemini-synthetic analyze-scene image.jpg
+
+# Batch processing with 5 variations per image
+gemini-synthetic batch-process data/input/ data/output/ --objects-dir data/objects/ --texts-file data/texts/sample_texts.txt --num-variations 5
+```
+
+### Python API
+
+```python
+from src.generator import GeminiSyntheticGenerator
+
+# Initialize generator
+generator = GeminiSyntheticGenerator(api_key="your-api-key")
+
+# Object insertion
+generator.insert_object(
+    scene_path="scene.jpg",
+    object_path="ball.png",
+    output_path="result.jpg",
+    object_type="ball"  # Optional: auto-detected if None
+)
+
+# Text insertion
+generator.insert_text(
+    scene_path="person.jpg",
+    text="TEAM ALPHA",
+    output_path="result.jpg",
+    target_area="shirt",
+    style="sporty"
+)
+
+# Scene analysis
+analysis = generator.analyze_scene("image.jpg")
+print(analysis)
+
+# Batch processing
+results = generator.batch_process(
+    input_dir="input/",
+    output_dir="output/",
+    objects_dir="objects/",
+    texts_file="texts.txt",
+    num_variations=3
+)
+```
+
+## Project Structure
+
+```
+gemini-synthetic-generator/
+├── src/
+│   ├── generator.py      # Core generation logic
+│   ├── main.py          # CLI interface
+│   └── __init__.py
+├── data/
+│   ├── input/           # Input scene images
+│   ├── objects/         # Objects for insertion
+│   ├── texts/           # Text files
+│   └── output/          # Generated results
+├── examples/
+│   └── python_api_example.py
+├── docker-compose.yml
+├── Dockerfile
+└── pyproject.toml
+```
+
+## Supported Operations
+
+### Object Insertion
+- **Sports Equipment**: Balls, caps, equipment
+- **Everyday Items**: Keys, phones, books
+- **Accessories**: Glasses, jewelry, bags
+- **Custom Objects**: Any PNG/JPEG with clean background
+
+### Text Insertion
+- **Clothing**: Shirts, jackets, hats
+- **Signage**: Signs, banners, posters
+- **Publications**: Books, magazines, displays
+- **Surfaces**: Walls, ground, vehicles
+
+### Supported Formats
+- **Input**: JPEG, PNG, BMP
+- **Output**: Same format as input with preserved quality
+- **Objects**: PNG preferred for transparency support
+
+## API Configuration
+
+### Object Types
+The system supports automatic detection, using Gemini vision to analyze object images
+
+### Text Areas
+- `shirt` - Clothing chest area
+- `sign` - Sign surfaces with perspective correction
+- `banner` - Flexible banner/poster surfaces
+- `book` - Book covers and pages
+- `wall` - Wall surfaces
+- `ground` - Floor/pavement surfaces
+
+### Text Styles
+- `casual` - Handwritten-style, relaxed positioning
+- `formal` - Clean, professional typography
+- `sporty` - Bold, athletic lettering
+- `artistic` - Creative, stylized text
+- `vintage` - Retro styling with aged appearance
+
+## Docker Support
+
+Full containerization with development and production configurations:
+
+```bash
+# Development with mounted volumes
+docker-compose up
+
+# Production build
+docker build -t gemini-synthetic-generator .
+docker run -e GEMINI_API_KEY=your-key gemini-synthetic-generator
+```
+
+## Development
+
+### Setup Development Environment
+
+```bash
+uv sync --dev
+pre-commit install
+```
+
+### Code Quality
+
+```bash
+# Format code
+black src/
+
+# Lint code
+ruff src/
+
+# Run tests
+pytest
+```
 
 ## Limitations
 
-**API Dependencies:**
-- **Network Requirement**: Requires stable internet connection for Gemini API
-- **Rate Limiting**: Google API rate limits may throttle batch processing
-- **Cost Scaling**: Per-image API costs make large-scale generation expensive
-- **Service Availability**: Dependent on Google's API uptime and model availability
+- Requires internet connection for Gemini API
+- Processing speed limited by API rate limits
+- Generation quality varies with scene complexity
+- Generation quality varies with context match between scene and object/text
+- API costs scale with usage volume
 
-**Generation Quality:**
-- **Consistency Variance**: AI generation may produce varying quality across similar scenes
-- **Complex Scenes**: Performance may degrade with highly cluttered or complex backgrounds  
-- **Fine Detail Control**: Limited precise control over exact placement coordinates
-- **Style Consistency**: Text styling may vary between generations
+## Examples Gallery
 
-**Technical Constraints:**
-- **Model Limitations**: Bound by Gemini's current capabilities and training data
-- **Object Recognition**: May struggle with very novel or abstract objects
-- **Cultural Context**: Potential biases in object placement based on training data
-- **Resolution Limits**: Optimal performance on images up to 2K resolution
+The `data/output/` directory contains example results:
+- Object insertions: tennis_player_obj_*.png, car_obj_*.png
+- Text insertions: tennis_player_text_*.png, musician_text_*.png
 
-**Verification Challenges:**
-- **Quality Assessment**: No automated quality scoring for generated results
-- **Insertion Validation**: Manual review required for quality assurance
+## API Key Setup
 
----
+Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey) and set:
 
-## Improvement Ideas
+```bash
+export GEMINI_API_KEY="your-api-key-here"
+```
 
-**Enhanced Intelligence:**
-- **Multi-Model Ensemble**: Combine Gemini with other vision models (Claude, GPT-4V) for consensus-based generation
-- **Custom Fine-tuning**: Fine-tune smaller models on domain-specific synthetic data patterns
-- **Advanced Prompting**: Implement chain-of-thought prompting for better reasoning about placement
-
-**Quality Assurance:**
-- **Automated Scoring**: Train dedicated realism assessment models using human preferences
-- **A/B Testing Pipeline**: Systematic quality comparison across different prompt strategies  
-- **Human-in-the-Loop**: Integration points for manual review and correction
-- **Physics Validation**: Rule-based checks for physically plausible placements
-
-**Scalability Enhancements:**
-- **Local Model Integration**: Hybrid approach with local models for preprocessing/filtering
-- **Batch Optimization**: Smart batching to maximize API efficiency and reduce costs
-- **Caching System**: Intelligent caching of similar generation tasks
-- **Distributed Processing**: Multi-API-key support for parallel processing
-
-**Specialized Features:**
-- **Domain Adaptation**: Specialized prompts and workflows for medical, automotive, retail domains
-- **Video Support**: Extension to video frame processing for temporal consistency
-- **3D Awareness**: Enhanced depth understanding for better spatial placement
-
----
-
-## Reusability
-
-**Cross-Domain Applications:**
-- **Medical Imaging**: Synthetic lesion, implant, or pathology insertion with medical-specific prompts
-- **Retail/E-commerce**: Product placement in lifestyle scenes for catalog generation
-- **Content Creation**: Object and text insertion for marketing and advertising materials
-- **Entertainment**: Asset insertion for film/game pre-visualization
-
-**Architecture Flexibility:**
-- **Model Swapping**: Easy substitution of Gemini with other multimodal models (GPT-4V, Claude)
-- **Prompt Templates**: Extensible prompt library for different use cases and domains
-- **Quality Control**: Configurable quality assessment and filtering systems
-- **Output Formats**: Configurable output processing and metadata generation
-
-**Integration Patterns:**
-- **API-First Design**: RESTful wrapper available for microservice architectures
-- **Pipeline Integration**: Compatible with MLOps pipelines (Kubeflow, MLflow)
-- **Cloud Deployment**: Ready for cloud-native deployment (GCP, AWS, Azure)
-- **Edge Adaptation**: Lightweight versions possible with smaller local models
-
-**Scaling Considerations:**
-- **Cost Management**: Built-in cost tracking and budget controls for API usage
-- **Quality Gates**: Configurable quality thresholds for automated acceptance/rejection
-- **Multi-Tenant**: Support for multiple API keys and user isolation
-- **Audit Trails**: Comprehensive logging for generation provenance and debugging
-
-The **prompt-driven approach** makes this solution highly adaptable - new capabilities can be added through prompt engineering rather than code changes, enabling rapid iteration and domain-specific customization.
+Or pass directly to the CLI:
+```bash
+gemini-synthetic --api-key your-key insert-object ...
+```
