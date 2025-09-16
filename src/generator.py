@@ -6,11 +6,10 @@ Uses Google's Gemini model for intelligent object and text insertion.
 import os
 import logging
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from io import BytesIO
 
 from google import genai
-from google.genai import types
 from PIL import Image
 import random
 
@@ -88,8 +87,8 @@ class GeminiSyntheticGenerator:
             logger.warning(f"Gemini object detection failed: {e}")
             return "object"
 
+    @staticmethod
     def create_object_insertion_prompt(
-            self,
             object_type: str,
             enhancement_level: str = "realistic"
     ) -> str:
@@ -145,8 +144,8 @@ class GeminiSyntheticGenerator:
 
         return prompt
 
+    @staticmethod
     def create_text_insertion_prompt(
-            self,
             text: str,
             target_area: str,
             style: Optional[str] = None

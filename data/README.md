@@ -22,9 +22,11 @@ Place your scene images here. Supported formats:
 - BMP (.bmp)
 
 Example files:
-- `person_standing.jpg` - Person in a field
-- `sports_scene.jpg` - Sports environment
-- `indoor_scene.png` - Indoor setting
+- `ice_cream_person.png` - Person with ice cream
+- `tennis_player.png` - Tennis player in action
+- `musician.png` - Musician with instrument
+- `kids.png` - Children playing
+- `car.png` - Car scene
 
 ### Objects Directory (`objects/`)
 Place object images you want to insert into scenes. These should be:
@@ -34,9 +36,10 @@ Place object images you want to insert into scenes. These should be:
 
 Example files:
 - `baseball.png` - Baseball object
-- `basketball.png` - Basketball object
 - `cap.png` - Baseball cap
-- `phone.png` - Mobile phone
+- `beer.png` - Beer bottle
+- `guitar.png` - Guitar instrument
+- `keys.png` - Set of keys
 
 ### Texts Directory (`texts/`)
 Create text files with content for batch text insertion:

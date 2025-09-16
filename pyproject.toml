@@ -3,7 +3,7 @@ name = "gemini-synthetic-generator"
 version = "0.1.0"
 description = "Gemini-powered synthetic data generator for object and text insertion"
 authors = [
-    {name = "Synthetic Data Team", email = "team@syntheticdata.com"}
+    {name = "Pedro Vieira", email = "pedrovieira@arrowplan.com"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
