@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8-devel-ubuntu22.04
+FROM nvidia/cuda:12.1-runtime-ubuntu22.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install system dependencies
+# Install system dependencies (optimized for Gemini-only usage)
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -15,17 +15,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    libgtk-3-0 \
     libgl1-mesa-glx \
-    libglib2.0-0 \
-    libavcodec-dev \
-    libavformat-dev \
-    libswscale-dev \
-    ffmpeg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,6 +32,8 @@ COPY README.md .
 
 # Create source directory and copy source code
 COPY src/ ./src/
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
 
 # Create virtual environment and install dependencies
 RUN uv venv /app/.venv \
@@ -69,8 +61,9 @@ ENV GEMINI_API_KEY=""
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python3 -c "import sys; from src.generator import GeminiSyntheticGenerator; sys.exit(0)"
 
-# Default command shows help
-CMD ["gemini-synthetic", "--help"]
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["--help"]
 
 # Example usage commands (commented):
 # docker run -v $(pwd)/data:/app/data -e GEMINI_API_KEY=your_key_here gemini-synthetic:latest \

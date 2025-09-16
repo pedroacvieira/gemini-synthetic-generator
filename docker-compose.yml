@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  gemini-synthetic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gemini-synthetic:latest
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      # Mount your local data directories
+      - ./data/input:/app/data/input
+      - ./data/output:/app/data/output
+      - ./data/objects:/app/data/objects
+      - ./data/texts:/app/data/texts
+    working_dir: /app
+    command: ["--help"]
+
+  # Service for batch processing
+  batch-processor:
+    extends: gemini-synthetic
+    command: [
+      "gemini-synthetic", "batch-process",
+      "/app/data/input", "/app/data/output",
+      "--objects-dir", "/app/data/objects",
+      "--texts-file", "/app/data/texts/texts.txt",
+      "--num-variations", "3"
+    ]
+
+  # Service for object insertion
+  object-inserter:
+    extends: gemini-synthetic
+    command: [
+      "gemini-synthetic", "insert-object",
+      "/app/data/input/scene.jpg",
+      "/app/data/objects/object.png",
+      "/app/data/output/result.jpg"
+    ]
+
+  # Service for text insertion
+  text-inserter:
+    extends: gemini-synthetic
+    command: [
+      "gemini-synthetic", "insert-text",
+      "/app/data/input/scene.jpg",
+      "Sample Text",
+      "/app/data/output/result.jpg",
+      "--target-area", "shirt"
+    ]
+
+  # Service for scene analysis
+  scene-analyzer:
+    extends: gemini-synthetic
+    command: [
+      "gemini-synthetic", "analyze-scene",
+      "/app/data/input/scene.jpg"
+    ]
+
+# For GPU support, you might also want to use the nvidia-docker2 runtime
+# Make sure you have nvidia-container-runtime installed

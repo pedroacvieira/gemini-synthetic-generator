@@ -42,8 +42,6 @@ class GeminiSyntheticGenerator:
         self.model_name = model_name
 
 
-
-
     def auto_detect_object_type(self, object_path: str) -> str:
         """Auto-detect object type using Gemini visual analysis.
 
