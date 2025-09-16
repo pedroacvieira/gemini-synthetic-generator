@@ -1,21 +1,21 @@
 # Gemini Synthetic Data Generator Model Card
 
 **Version:** 0.1.0  
-**Date:** December 2024  
+**Date:** September 2025  
 **Model Type:** Generative AI Pipeline  
-**Authors:** Synthetic Data Team
+**Authors:** Pedro Vieira
 
 ---
 
 ## Method Summary
 
-The **Gemini Synthetic Data Generator** uses Google's Gemini 2.5 Flash Image Preview model to perform intelligent object and text insertion into COCO dataset images. This approach leverages Gemini's native multimodal capabilities for end-to-end synthetic data generation.
+The **Gemini Synthetic Data Generator** uses Google's Gemini 2.5 Flash Image Preview model to perform intelligent object and text insertion into images. This approach leverages Gemini's native multimodal capabilities for end-to-end synthetic data generation without requiring traditional computer vision pipelines.
 
 **Core Architecture:**
-1. **Scene Analysis**: YOLOv8 provides object detection for context understanding and verification
-2. **Intelligent Prompting**: Dynamic prompt generation based on scene content, object types, and insertion requirements  
+1. **Scene Analysis**: Gemini analyzes scene context, lighting, and composition
+2. **Intelligent Prompting**: Dynamic prompt generation based on scene content, object types, and insertion requirements
 3. **Gemini Generation**: Direct image generation through Gemini's vision-language model with optimized prompts
-4. **Quality Assurance**: Optional YOLO verification of successful insertions
+4. **Quality Output**: High-quality synthetic images with seamlessly integrated objects
 
 **Key Innovation**: Rather than traditional computer vision pipelines, this method treats synthetic data generation as a **visual reasoning task**, allowing Gemini to understand scene semantics, lighting conditions, perspective, and realistic object placement through natural language instructions.
 
@@ -26,7 +26,7 @@ The **Gemini Synthetic Data Generator** uses Google's Gemini 2.5 Flash Image Pre
 ## Inputs / Outputs
 
 **Inputs:**
-- **Scene Image**: Primary COCO-style images (JPG, PNG, BMP) - any resolution up to 4K
+- **Scene Image**: Base images (JPG, PNG, BMP) - any resolution up to 4K
 - **Object Image**: Objects for insertion with clean backgrounds (PNG preferred)
 - **Text Content**: UTF-8 text strings for text insertion tasks
 - **Configuration**: Object type, target areas, style preferences, quality levels
@@ -52,27 +52,25 @@ The **Gemini Synthetic Data Generator** uses Google's Gemini 2.5 Flash Image Pre
 
 **Dependencies:**
 ```
-Core: google-genai (Gemini API), ultralytics (YOLO), Pillow
+Core: google-genai (Gemini API), Pillow
 CLI: typer, rich
 Development: black, ruff, pytest
 ```
 
 **System Requirements:**
-- **GPU**: NVIDIA GPU with 4GB+ VRAM (for YOLO verification)
-- **CPU**: 4+ cores recommended for batch processing
-- **RAM**: 8GB minimum, 16GB for large batch jobs
+- **CPU**: 2+ cores recommended for batch processing
+- **RAM**: 4GB minimum, 8GB for large batch jobs
 - **Network**: Stable internet for Gemini API calls
 
 **Performance Metrics:**
-- **Processing Time**: 5-15 seconds per generation
-  - YOLO detection: ~0.5s
+- **Processing Time**: 3-12 seconds per generation
   - Gemini API call: ~3-12s
   - Image processing: ~0.5s
 - **API Costs**: ~$0.005-0.015 per image (Gemini 2.5 Flash pricing)
-- **Throughput**: ~4-12 images/minute (API rate limited)
-- **Memory Usage**: ~2-3GB during processing
+- **Throughput**: ~5-20 images/minute (API rate limited)
+- **Memory Usage**: ~1-2GB during processing
 
-**Docker Support**: Full containerization with NVIDIA runtime and UV package management
+**Docker Support**: Full containerization with UV package management for easy deployment
 
 ---
 
@@ -97,8 +95,8 @@ Development: black, ruff, pytest
 - **Resolution Limits**: Optimal performance on images up to 2K resolution
 
 **Verification Challenges:**
-- **YOLO Accuracy**: Object verification limited by YOLO's detection capabilities
-- **Insertion Validation**: No automated quality scoring for generated results
+- **Quality Assessment**: No automated quality scoring for generated results
+- **Insertion Validation**: Manual review required for quality assurance
 
 ---
 
@@ -133,13 +131,13 @@ Development: black, ruff, pytest
 **Cross-Domain Applications:**
 - **Medical Imaging**: Synthetic lesion, implant, or pathology insertion with medical-specific prompts
 - **Retail/E-commerce**: Product placement in lifestyle scenes for catalog generation
-- **Autonomous Vehicles**: Traffic object augmentation with safety-critical placement rules
+- **Content Creation**: Object and text insertion for marketing and advertising materials
 - **Entertainment**: Asset insertion for film/game pre-visualization
 
 **Architecture Flexibility:**
 - **Model Swapping**: Easy substitution of Gemini with other multimodal models (GPT-4V, Claude)
 - **Prompt Templates**: Extensible prompt library for different use cases and domains
-- **Verification Modules**: Pluggable verification systems beyond YOLO (SAM, DINO, custom models)
+- **Quality Control**: Configurable quality assessment and filtering systems
 - **Output Formats**: Configurable output processing and metadata generation
 
 **Integration Patterns:**
