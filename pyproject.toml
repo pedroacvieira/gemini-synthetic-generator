@@ -1,0 +1,42 @@
+[project]
+name = "gemini-synthetic-generator"
+version = "0.1.0"
+description = "Gemini-powered synthetic data generator for object and text insertion"
+authors = [
+    {name = "Synthetic Data Team", email = "team@syntheticdata.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+
+dependencies = [
+    "google-genai>=0.3.0",
+    "ultralytics>=8.3.0",
+    "Pillow>=10.0.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+gemini-synthetic = "src.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "W", "F", "I", "C", "B", "UP"]
+ignore = ["E501", "B008", "C901"]
