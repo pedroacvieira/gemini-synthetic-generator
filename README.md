@@ -56,25 +56,11 @@ docker-compose up --build
 export GEMINI_API_KEY="your-gemini-api-key"
 ```
 
-### 2. Basic Object Insertion
+### 2. Scene Analysis
 
 ```bash
-# Insert a baseball into a tennis player image
-gemini-synthetic insert-object data/input/tennis_player.png data/objects/baseball.png data/output/result.png
-```
-
-### 3. Text Insertion
-
-```bash
-# Add text to a shirt
-gemini-synthetic insert-text data/input/tennis_player.png "TEAM ALPHA" data/output/text_result.png --target-area shirt
-```
-
-### 4. Batch Processing
-
-```bash
-# Process multiple images with random objects and texts
-gemini-synthetic batch-process data/input/ data/output/ --objects-dir data/objects/ --texts-file data/texts/sample_texts.txt --num-variations 5
+# Analyze a scene to verify that installations worked well
+gemini-synthetic analyze-scene data/input/tennis_player.png
 ```
 
 ## Usage Examples
@@ -88,8 +74,8 @@ gemini-synthetic insert-object data/input/tennis_player.png data/objects/basebal
 # Text insertion with style
 gemini-synthetic insert-text data/input/tennis_player.png "TEAM ALPHA" data/output/text_result.png --target-area shirt
 
-# Scene analysis
-gemini-synthetic analyze-scene image.jpg
+# Scene analysis - Get detailed insertion recommendations
+gemini-synthetic analyze-scene data/input/tennis_player.png
 
 # Batch processing with 5 variations per image
 gemini-synthetic batch-process data/input/ data/output/ --objects-dir data/objects/ --texts-file data/texts/sample_texts.txt --num-variations 5
@@ -120,9 +106,11 @@ generator.insert_text(
     style="sporty"
 )
 
-# Scene analysis
-analysis = generator.analyze_scene("image.jpg")
+# Scene analysis - Get detailed placement recommendations
+analysis = generator.analyze_scene("data/input/tennis_player.png")
 print(analysis)
+# Returns detailed analysis with optimal placement zones, lighting considerations,
+# and specific recommendations for object/text insertion opportunities
 
 # Batch processing
 results = generator.batch_process(
