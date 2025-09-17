@@ -1,33 +1,12 @@
 # Gemini Synthetic Generator - Docker Usage Guide
 
-This guide explains how to use the Gemini Synthetic Generator as a containerized application with NVIDIA GPU support.
+This guide explains how to use the Gemini Synthetic Generator as a containerized application.
 
 ## Prerequisites
 
 ### System Requirements
 - Docker Engine 20.10+ with BuildKit support
-- NVIDIA Container Toolkit (nvidia-docker2)
-- NVIDIA GPU with CUDA support
 - Docker Compose (optional, for easier usage)
-
-### Setup NVIDIA Docker Support
-
-1. **Install NVIDIA Container Toolkit:**
-   ```bash
-   # Ubuntu/Debian
-   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-   curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-   sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-   sudo systemctl restart docker
-   ```
-
-2. **Verify GPU Access:**
-   ```bash
-   docker run --rm --gpus all nvidia/cuda:12.1-runtime-ubuntu22.04 nvidia-smi
-   ```
 
 ## Quick Start
 
@@ -60,7 +39,7 @@ data/
 export GEMINI_API_KEY="your-gemini-api-key-here"
 
 # Object insertion
-docker run --rm --gpus all \
+docker run --rm \
   -v $(pwd)/data:/app/data \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
   gemini-synthetic:latest \
@@ -70,7 +49,7 @@ docker run --rm --gpus all \
   /app/data/output/result.jpg
 
 # Text insertion
-docker run --rm --gpus all \
+docker run --rm \
   -v $(pwd)/data:/app/data \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
   gemini-synthetic:latest \
@@ -81,7 +60,7 @@ docker run --rm --gpus all \
   --target-area shirt
 
 # Batch processing
-docker run --rm --gpus all \
+docker run --rm \
   -v $(pwd)/data:/app/data \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
   gemini-synthetic:latest \
@@ -93,7 +72,7 @@ docker run --rm --gpus all \
   --num-variations 3
 
 # Scene analysis
-docker run --rm --gpus all \
+docker run --rm \
   -v $(pwd)/data:/app/data \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
   gemini-synthetic:latest \
@@ -162,7 +141,7 @@ if __name__ == "__main__":
 
 ```bash
 # Run custom script
-docker run --rm --gpus all \
+docker run --rm \
   -v $(pwd)/data:/app/data \
   -v $(pwd)/my_script.py:/app/my_script.py \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
@@ -186,15 +165,13 @@ The container expects the following volume structure:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GEMINI_API_KEY` | Yes | Your Gemini API key |
-| `NVIDIA_VISIBLE_DEVICES` | No | GPU devices to use (default: all) |
-| `NVIDIA_DRIVER_CAPABILITIES` | No | Driver capabilities (default: compute,utility) |
 
 ## Performance Optimization
 
-### GPU Memory Management
+### Memory Management
 ```bash
-# Limit GPU memory usage
-docker run --rm --gpus all \
+# Limit memory usage
+docker run --rm \
   --memory="4g" \
   --shm-size="2g" \
   -v $(pwd)/data:/app/data \
@@ -206,7 +183,7 @@ docker run --rm --gpus all \
 ```bash
 # Process multiple images in parallel using multiple containers
 for image in data/input/*.jpg; do
-  docker run --rm --gpus all -d \
+  docker run --rm -d \
     -v $(pwd)/data:/app/data \
     -e GEMINI_API_KEY=$GEMINI_API_KEY \
     gemini-synthetic:latest \
@@ -221,19 +198,13 @@ wait
 
 ### Common Issues
 
-1. **GPU Not Detected:**
-   ```bash
-   # Check GPU access
-   docker run --rm --gpus all nvidia/cuda:12.1-runtime-ubuntu22.04 nvidia-smi
-   ```
-
-2. **Permission Denied:**
+1. **Permission Denied:**
    ```bash
    # Fix volume permissions
    sudo chown -R 1000:1000 ./data
    ```
 
-3. **API Key Issues:**
+2. **API Key Issues:**
    ```bash
    # Verify API key is set
    docker run --rm -e GEMINI_API_KEY=$GEMINI_API_KEY gemini-synthetic:latest \
@@ -243,7 +214,7 @@ wait
 ### Debugging
 ```bash
 # Interactive shell for debugging
-docker run --rm -it --gpus all \
+docker run --rm -it \
   -v $(pwd)/data:/app/data \
   -e GEMINI_API_KEY=$GEMINI_API_KEY \
   gemini-synthetic:latest bash
@@ -259,10 +230,10 @@ The current Dockerfile uses a single-stage build. For production, consider:
 
 ```dockerfile
 # Multi-stage build example
-FROM nvidia/cuda:12.1-runtime-ubuntu22.04 as base
+FROM ubuntu:22.04 as base
 # ... build dependencies
 
-FROM nvidia/cuda:12.1-runtime-ubuntu22.04 as production
+FROM ubuntu:22.04 as production
 COPY --from=base /app/.venv /app/.venv
 # ... copy only runtime requirements
 ```
@@ -277,17 +248,11 @@ services:
       resources:
         limits:
           memory: 8G
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 ```
 
 ## Support
 
 For issues related to:
-- **Docker setup**: Check NVIDIA Container Toolkit installation
-- **GPU access**: Verify CUDA drivers and nvidia-docker2
+- **Docker setup**: Check Docker installation and permissions
 - **API errors**: Confirm Gemini API key and quota
-- **Performance**: Monitor GPU memory usage with `nvidia-smi`
+- **Performance**: Monitor container resource usage with `docker stats`
